@@ -3,3 +3,4 @@ python-dotenv
 uvicorn
 firebase-admin
 supabase
+python-multipart
