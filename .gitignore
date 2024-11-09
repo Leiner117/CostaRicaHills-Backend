@@ -1,0 +1,5 @@
+.vscode/settings.json
+__pycache__/models.cpython-312.pyc
+__pycache__/server.cpython-312.pyc
+tourDefault.jpg
+.env

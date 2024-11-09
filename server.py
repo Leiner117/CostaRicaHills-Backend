@@ -2,11 +2,17 @@ import os
 import firebase_admin
 from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from models import Tour
+import httpx
+from supabase import create_client, Client
 
+# Supabase 
+SUPABASE_URL = "https://ivjggofdakuwpkibfodt.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2amdnb2ZkYWt1d3BraWJmb2R0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMTEwNTA0MiwiZXhwIjoyMDQ2NjgxMDQyfQ.nAqUxY2RIrx1NXatY4u0BYvfU7BhWWy-WebCwoNJ5ao"
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Cargar variables de entorno
 load_dotenv()
 
@@ -58,7 +64,27 @@ async def get_tour(tour_id: str):
             return {"error": "Tour not found"}
     except Exception as e:
         return {"error": str(e)}
+# ---- upload file ----
+@app.post("/uploadFile/")
+async def subir_archivo(bucket_name: str, file: UploadFile, tourName: str):
+    try:
+        response = supabase.storage.from_(bucket_name).upload(tourName+"/"+file.name, file)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al subir el archivo: {str(e)}")
+    return {"mensaje": "Archivo subido exitosamente", "detalles": response}
+# ---- get files ----
+@app.get("/getFiles/")
+def obtener_bucket(bucket_name: str, tourName: str):
+    try:
+        response = supabase.storage.from_(bucket_name).list(tourName+"/")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener el bucket: {str(e)}")
+    link_list = []
+    for i in response:
+        link = supabase.storage.from_(bucket_name).get_public_url(tourName+"/"+i["name"])
+        link_list.append(link)
+    return link_list
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("server:app", host="0.0.0.0", port=port)
+    uvicorn.run("server:app", host="localhost", port=port)
