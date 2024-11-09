@@ -7,13 +7,13 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from models import Tour
 from supabase import create_client, Client
-
-# Supabase 
-SUPABASE_URL = "https://ivjggofdakuwpkibfodt.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2amdnb2ZkYWt1d3BraWJmb2R0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMTEwNTA0MiwiZXhwIjoyMDQ2NjgxMDQyfQ.nAqUxY2RIrx1NXatY4u0BYvfU7BhWWy-WebCwoNJ5ao"
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Cargar variables de entorno
 load_dotenv()
+# Supabase 
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 
 # Crear un diccionario con las credenciales
 credenciales_json = {
