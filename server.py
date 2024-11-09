@@ -6,7 +6,6 @@ from fastapi import FastAPI, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from models import Tour
-import httpx
 from supabase import create_client, Client
 
 # Supabase 
@@ -84,6 +83,7 @@ def obtener_bucket(bucket_name: str, tourName: str):
         link = supabase.storage.from_(bucket_name).get_public_url(tourName+"/"+i["name"])
         link_list.append(link)
     return link_list
+#--- delete file ---
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
