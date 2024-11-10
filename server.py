@@ -14,6 +14,11 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# Configurar CORS
+origins = [
+    "http://localhost:5173",  # Añade aquí los orígenes permitidos
+    "https://costaricahills-backend.onrender.com",
+]
 
 # Crear un diccionario con las credenciales
 credenciales_json = {
@@ -40,6 +45,13 @@ db = firestore.client()
 
 # Crear la aplicación FastAPI
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Permitir estos orígenes
+    allow_credentials=True,
+    allow_methods=["*"],  # Permitir todos los métodos (GET, POST, etc.)
+    allow_headers=["*"],  # Permitir todos los encabezados
+)
 
 # ---- Add Methods ----
 @app.post("/tours")
