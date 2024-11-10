@@ -63,6 +63,17 @@ async def get_tour(tour_id: str):
             return {"error": "Tour not found"}
     except Exception as e:
         return {"error": str(e)}
+#--- get all tours ---
+@app.get("/toursAll")
+async def get_all_tours():
+    try:
+        tours = db.collection('tours').stream()
+        tour_list = []
+        for tour in tours:
+            tour_list.append(tour.to_dict())
+        return tour_list
+    except Exception as e:
+        return {"error": str(e)}
 # ---- upload file ----
 @app.post("/uploadFile/")
 async def subir_archivo(bucket_name: str, file: UploadFile, tourName: str):
@@ -84,7 +95,13 @@ def obtener_bucket(bucket_name: str, tourName: str):
         link_list.append(link)
     return link_list
 #--- delete file ---
-
+@app.delete("/deleteFile/")
+def eliminar_archivo(bucket_name: str, tourName: str, fileName: str):
+    try:
+        response = supabase.storage.from_(bucket_name).remove(tourName+"/"+fileName)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al eliminar el archivo: {str(e)}")
+    return {"mensaje": "Archivo eliminado exitosamente", "detalles": response}
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("server:app", host="localhost", port=port)
