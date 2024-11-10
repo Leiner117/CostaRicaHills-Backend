@@ -59,6 +59,8 @@ async def add_tour(tour: Tour):
     try:
         doc_ref = db.collection('tours').document()
         doc_ref.set(tour.dict())
+        for i in tour.imagenes:
+            subir_archivo("tours", i, tour.nombre)
         return {"message": "Tour added successfully"}
     except Exception as e:
         return {"error": str(e)}
@@ -87,8 +89,7 @@ async def get_all_tours():
     except Exception as e:
         return {"error": str(e)}
 # ---- upload file ----
-@app.post("/uploadFile/")
-async def subir_archivo(bucket_name: str, file: UploadFile, tourName: str):
+def subir_archivo(bucket_name: str, file: UploadFile, tourName: str):
     try:
         response = supabase.storage.from_(bucket_name).upload(tourName+"/"+file.name, file)
     except Exception as e:
