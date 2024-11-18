@@ -2,11 +2,12 @@ import os
 import firebase_admin
 from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
-from fastapi import FastAPI, UploadFile, HTTPException
+from fastapi import FastAPI, UploadFile, HTTPException, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from models import Tour
 from supabase import create_client, Client
+from typing import List
 # Cargar variables de entorno
 load_dotenv()
 # Supabase 
@@ -55,13 +56,29 @@ app.add_middleware(
 
 # ---- Add Methods ----
 @app.post("/tours")
-async def add_tour(tour: Tour):
+async def add_tour(
+    nombre: str = Form(...),
+    descripcion: str = Form(...),
+    canton: str = Form(...),
+    provincia: str = Form(...),
+    duracion: str = Form(...),
+    precio: float = Form(...),
+    imagenes: List[UploadFile] = File(...)
+):
     try:
+        destino = [canton, provincia]
+        tour = Tour(
+            nombre=nombre,
+            descripcion=descripcion,
+            destino=destino,
+            duracion=duracion,
+            precio=precio
+        )
         doc_ref = db.collection('tours').document()
         doc_ref.set(tour.dict())
-        for i in tour.imagenes:
-            subir_archivo("tours", i, tour.nombre)
-        return {"message": "Tour added successfully"}
+        for imagen in imagenes:
+            subir_archivo("tours", imagen, nombre)
+        return tour.dict()
     except Exception as e:
         return {"error": str(e)}
 
@@ -90,11 +107,13 @@ async def get_all_tours():
         return {"error": str(e)}
 # ---- upload file ----
 def subir_archivo(bucket_name: str, file: UploadFile, tourName: str):
-    try:
-        response = supabase.storage.from_(bucket_name).upload(tourName+"/"+file.name, file)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al subir el archivo: {str(e)}")
+    response = None
+    file_content = file.file.read()
+    file_path = f"{tourName}/{file.filename}"
+    response = supabase.storage.from_("CostaRicaHillsBucket").upload(file_path, file_content)
     return {"mensaje": "Archivo subido exitosamente", "detalles": response}
+   
+    
 # ---- get files ----
 @app.get("/getFiles/")
 def obtener_bucket(bucket_name: str, tourName: str):
