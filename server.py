@@ -94,6 +94,68 @@ async def get_tour(tour_id: str):
             return {"error": "Tour not found"}
     except Exception as e:
         return {"error": str(e)}
+
+# ---- Update Methods ----
+@app.put("/tours/{tour_id}")
+async def update_tour(
+    tour_id: str,
+    nombre: str = Form(None),
+    descripcion: str = Form(None),
+    canton: str = Form(None),
+    provincia: str = Form(None),
+    duracion: str = Form(None),
+    precio: float = Form(None),
+    imagenes: List[UploadFile] = File(None)
+):
+    try:
+        doc_ref = db.collection('tours').document(tour_id)
+        doc = doc_ref.get()
+        if doc.exists:
+            tour = Tour(**doc.to_dict())
+            if nombre:
+                tour.nombre = nombre
+            if descripcion:
+                tour.descripcion = descripcion
+            if canton:
+                tour.destino[0] = canton
+            if provincia:
+                tour.destino[1] = provincia
+            if duracion:
+                tour.duracion = duracion
+            if precio:
+                tour.precio = precio
+            doc_ref.set(tour.dict())
+            return tour.dict()
+        else:
+            return {"error": "Tour not found"}
+    except Exception as e:
+        return {"error": str(e)}
+
+# ---- Delete Methods ----
+@app.delete("/tours/{tour_id}")
+async def delete_tour(tour_id: str):
+    try:
+        doc_ref = db.collection('tours').document(tour_id)
+        doc = doc_ref.get()
+        if doc.exists:
+            doc_ref.delete()
+            return {"message": "Tour deleted"}
+        else:
+            return {"error": "Tour not found"}
+    except Exception as e:
+        return {"error": str(e)} 
+#--- find tour by name ---
+@app.get("/toursByName/{tour_name}")
+async def get_tour_by_name(tour_name: str):
+    try:
+        tours = db.collection('tours').stream()
+        for tour in tours:
+            if tour.to_dict()["nombre"] == tour_name:
+                
+                return {"id": tour.id}
+        return {"error": "Tour not found"}
+    except Exception as e:
+        return {"error": str(e)}
 #--- get all tours ---
 @app.get("/toursAll")
 async def get_all_tours():
@@ -101,7 +163,10 @@ async def get_all_tours():
         tours = db.collection('tours').stream()
         tour_list = []
         for tour in tours:
-            tour_list.append(tour.to_dict())
+            tour_data = tour.to_dict()
+            tour_data['id'] = tour.id  
+            tour_list.append(tour_data)
+        
         return tour_list
     except Exception as e:
         return {"error": str(e)}
