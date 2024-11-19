@@ -76,8 +76,9 @@ async def add_tour(
         )
         doc_ref = db.collection('tours').document()
         doc_ref.set(tour.dict())
+        print(imagenes)
         for imagen in imagenes:
-            subir_archivo("tours", imagen, nombre)
+            upload_file("tours", imagen, nombre)
         return tour.dict()
     except Exception as e:
         return {"error": str(e)}
@@ -139,6 +140,7 @@ async def delete_tour(tour_id: str):
         doc = doc_ref.get()
         if doc.exists:
             doc_ref.delete()
+            delete_all_files("tours", doc.to_dict()["nombre"])
             return {"message": "Tour deleted"}
         else:
             return {"error": "Tour not found"}
@@ -171,17 +173,15 @@ async def get_all_tours():
     except Exception as e:
         return {"error": str(e)}
 # ---- upload file ----
-def subir_archivo(bucket_name: str, file: UploadFile, tourName: str):
+def upload_file(bucket_name: str, file: UploadFile, tourName: str):
     response = None
     file_content = file.file.read()
     file_path = f"{tourName}/{file.filename}"
     response = supabase.storage.from_("CostaRicaHillsBucket").upload(file_path, file_content)
     return {"mensaje": "Archivo subido exitosamente", "detalles": response}
-   
-    
 # ---- get files ----
 @app.get("/getFiles/")
-def obtener_bucket(bucket_name: str, tourName: str):
+def get_file(bucket_name: str, tourName: str):
     try:
         response = supabase.storage.from_(bucket_name).list(tourName+"/")
     except Exception as e:
@@ -191,9 +191,16 @@ def obtener_bucket(bucket_name: str, tourName: str):
         link = supabase.storage.from_(bucket_name).get_public_url(tourName+"/"+i["name"])
         link_list.append(link)
     return link_list
+#--- delete all files---
+def delete_all_files(bucket_name: str, tourName: str):
+    try:
+        response = supabase.storage.from_(bucket_name).remove(tourName+"/")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al eliminar el bucket: {str(e)}")
+    return {"mensaje": "Archivos eliminados exitosamente", "detalles": response}
 #--- delete file ---
 @app.delete("/deleteFile/")
-def eliminar_archivo(bucket_name: str, tourName: str, fileName: str):
+def delete_file(bucket_name: str, tourName: str, fileName: str):
     try:
         response = supabase.storage.from_(bucket_name).remove(tourName+"/"+fileName)
     except Exception as e:
