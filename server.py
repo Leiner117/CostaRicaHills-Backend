@@ -78,7 +78,7 @@ async def add_tour(
         doc_ref.set(tour.dict())
         print(imagenes)
         for imagen in imagenes:
-            upload_file("tours", imagen, nombre)
+            uploadFile("tours", imagen, nombre)
         return tour.dict()
     except Exception as e:
         return {"error": str(e)}
@@ -172,13 +172,30 @@ async def get_all_tours():
         return tour_list
     except Exception as e:
         return {"error": str(e)}
-# ---- upload file ----
-def upload_file(bucket_name: str, file: UploadFile, tourName: str):
+
+def uploadFile(bucket_name: str, file: UploadFile, tourName: str):
     response = None
     file_content = file.file.read()
     file_path = f"{tourName}/{file.filename}"
     response = supabase.storage.from_("CostaRicaHillsBucket").upload(file_path, file_content)
     return {"mensaje": "Archivo subido exitosamente", "detalles": response}
+# ---- upload file ----
+@app.post("/uploadFile/")
+async def upload_file(
+    bucket_name: str = Form(...),
+    tourName: str = Form(...),
+    files: List[UploadFile] = File(...)
+):
+    try:
+        responses = []
+        for file in files:
+            file_content = await file.read()
+            file_path = f"{tourName}/{file.filename}"
+            response = supabase.storage.from_(bucket_name).upload(file_path, file_content)
+            responses.append(response)
+        return {"mensaje": "Archivos subidos exitosamente", "detalles": responses}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al subir los archivos: {str(e)}")
 # ---- get files ----
 @app.get("/getFiles/")
 def get_file(bucket_name: str, tourName: str):
