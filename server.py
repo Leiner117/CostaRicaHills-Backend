@@ -48,10 +48,10 @@ db = firestore.client()
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Permitir estos orígenes
+    allow_origins=origins, 
     allow_credentials=True,
-    allow_methods=["*"],  # Permitir todos los métodos (GET, POST, etc.)
-    allow_headers=["*"],  # Permitir todos los encabezados
+    allow_methods=["*"],  
+    allow_headers=["*"],  
 )
 
 # ---- Add Methods ----
@@ -211,7 +211,7 @@ def get_file(bucket_name: str, tourName: str):
 #--- delete all files---
 def delete_all_files(bucket_name: str, tourName: str):
     try:
-        response = supabase.storage.from_(bucket_name).remove(tourName+"/")
+        response = supabase.storage.from_(bucket_name).remove([tourName+"/"])
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al eliminar el bucket: {str(e)}")
     return {"mensaje": "Archivos eliminados exitosamente", "detalles": response}
@@ -219,7 +219,8 @@ def delete_all_files(bucket_name: str, tourName: str):
 @app.delete("/deleteFile/")
 def delete_file(bucket_name: str, tourName: str, fileName: str):
     try:
-        response = supabase.storage.from_(bucket_name).remove(tourName+"/"+fileName)
+        url = tourName+"/"+fileName[:-1]
+        response = supabase.storage.from_(bucket_name).remove([url])
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al eliminar el archivo: {str(e)}")
     return {"mensaje": "Archivo eliminado exitosamente", "detalles": response}
