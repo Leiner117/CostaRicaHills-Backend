@@ -36,7 +36,6 @@ credenciales_json = {
     "universal_domain": os.getenv("FIREBASE_UNIVERSE_DOMAIN")
 }
 
-# Verificar si ya se ha inicializado la app
 if not firebase_admin._apps:
     cred = credentials.Certificate(credenciales_json)
     firebase_admin.initialize_app(cred)
@@ -76,7 +75,6 @@ async def add_tour(
         )
         doc_ref = db.collection('tours').document()
         doc_ref.set(tour.dict())
-        print(imagenes)
         for imagen in imagenes:
             uploadFile("tours", imagen, nombre)
         return tour.dict()
@@ -91,7 +89,7 @@ async def get_tour(tour_id: str):
         if doc.exists:
             tour_data = doc.to_dict()
             tour_name = tour_data["nombre"]
-            bucket_name = "CostaRicaHillsBucket"  # Asegúrate de usar el nombre correcto del bucket
+            bucket_name = "CostaRicaHillsBucket" 
             tour_data["imagenes"] = get_file(bucket_name, tour_name)
             return tour_data
         else:
@@ -239,15 +237,20 @@ if __name__ == "__main__":
 async def add_reserve(
     tour_id: str = Form(...),
     user_id: str = Form(...),
-    date: str = Form(...),
-    cant_persons: int = Form(...)
+    startDate: str = Form(...),
+    endDate: str = Form(...),
+    cant_persons: int = Form(...),
+    status: str = Form(...)
+
 ):
     try:
         reserve = {
             "tour_id": tour_id,
             "user_id": user_id,
-            "date": date,
-            "cant_persons": cant_persons
+            "startDate": startDate,
+            "EndDate": endDate,
+            "cant_persons": cant_persons,
+            "status": status
         }
         doc_ref = db.collection('toursReservas').document()
         doc_ref.set(reserve)
