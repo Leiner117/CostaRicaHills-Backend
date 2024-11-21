@@ -233,3 +233,78 @@ def delete_file(bucket_name: str, tourName: str, fileName: str):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("server:app", host="localhost", port=port)
+#--- add reserve ---
+@app.post("/Addreserves")
+#params: tour_id, user_id, date, cant_persons
+async def add_reserve(
+    tour_id: str = Form(...),
+    user_id: str = Form(...),
+    date: str = Form(...),
+    cant_persons: int = Form(...)
+):
+    try:
+        reserve = {
+            "tour_id": tour_id,
+            "user_id": user_id,
+            "date": date,
+            "cant_persons": cant_persons
+        }
+        doc_ref = db.collection('toursReservas').document()
+        doc_ref.set(reserve)
+        return reserve
+    except Exception as e:
+        return {"error": str(e)}
+#--- get reserves ---
+@app.get("/getReserves")
+async def get_reserves():
+    try:
+        reserves = db.collection('toursReservas').stream()
+        reserve_list = []
+        for reserve in reserves:
+            reserve_data = reserve.to_dict()
+            reserve_data['id'] = reserve.id
+            reserve_list.append(reserve_data)
+        return reserve_list
+    except Exception as e:
+        return {"error": str(e)}
+#--- get reserves by user ---
+@app.get("/getReservesByUser/{user_id}")
+async def get_reserves_by_user(user_id: str):
+    try:
+        reserves = db.collection('toursReservas').stream()
+        reserve_list = []
+        for reserve in reserves:
+            reserve_data = reserve.to_dict()
+            if reserve_data["user_id"] == user_id:
+                reserve_data['id'] = reserve.id
+                reserve_list.append(reserve_data)
+        return reserve_list
+    except Exception as e:
+        return {"error": str(e)}
+#--- get reserves by tour ---
+@app.get("/getReservesByTour/{tour_id}")
+async def get_reserves_by_tour(tour_id: str):
+    try:
+        reserves = db.collection('toursReservas').stream()
+        reserve_list = []
+        for reserve in reserves:
+            reserve_data = reserve.to_dict()
+            if reserve_data["tour_id"] == tour_id:
+                reserve_data['id'] = reserve.id
+                reserve_list.append(reserve_data)
+        return reserve_list
+    except Exception as e:
+        return {"error": str(e)}
+#--- delete reserve ---
+@app.delete("/deleteReserve/{reserve_id}")
+async def delete_reserve(reserve_id: str):
+    try:
+        doc_ref = db.collection('toursReservas').document(reserve_id)
+        doc = doc_ref.get()
+        if doc.exists:
+            doc_ref.delete()
+            return {"message": "Reserve deleted"}
+        else:
+            return {"error": "Reserve not found"}
+    except Exception as e:
+        return {"error": str(e)}
