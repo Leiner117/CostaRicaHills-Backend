@@ -83,14 +83,17 @@ async def add_tour(
     except Exception as e:
         return {"error": str(e)}
 
-# ---- Get Methods ----
 @app.get("/tours/{tour_id}")
 async def get_tour(tour_id: str):
     try:
         doc_ref = db.collection('tours').document(tour_id)
         doc = doc_ref.get()
         if doc.exists:
-            return doc.to_dict()
+            tour_data = doc.to_dict()
+            tour_name = tour_data["nombre"]
+            bucket_name = "CostaRicaHillsBucket"  # Asegúrate de usar el nombre correcto del bucket
+            tour_data["imagenes"] = get_file(bucket_name, tour_name)
+            return tour_data
         else:
             return {"error": "Tour not found"}
     except Exception as e:
@@ -158,15 +161,17 @@ async def get_tour_by_name(tour_name: str):
         return {"error": "Tour not found"}
     except Exception as e:
         return {"error": str(e)}
-#--- get all tours ---
 @app.get("/toursAll")
 async def get_all_tours():
     try:
         tours = db.collection('tours').stream()
         tour_list = []
+        bucket_name = "CostaRicaHillsBucket" 
         for tour in tours:
             tour_data = tour.to_dict()
-            tour_data['id'] = tour.id  
+            tour_data['id'] = tour.id
+            tour_name = tour_data["nombre"]
+            tour_data["imagenes"] = get_file(bucket_name, tour_name)
             tour_list.append(tour_data)
         
         return tour_list
@@ -208,6 +213,7 @@ def get_file(bucket_name: str, tourName: str):
         link = supabase.storage.from_(bucket_name).get_public_url(tourName+"/"+i["name"])
         link_list.append(link)
     return link_list
+
 #--- delete all files---
 def delete_all_files(bucket_name: str, tourName: str):
     try:
