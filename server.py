@@ -233,27 +233,25 @@ if __name__ == "__main__":
     uvicorn.run("server:app", host="localhost", port=port)
 #--- add reserve ---
 @app.post("/Addreserves")
-#params: tour_id, user_id, date, cant_persons
 async def add_reserve(
     tour_id: str = Form(...),
     user_id: str = Form(...),
     startDate: str = Form(...),
     endDate: str = Form(...),
     cant_persons: int = Form(...),
-    status: str = Form(...)
-
-):
+    status: str = Form(...)):
     try:
         reserve = {
             "tour_id": tour_id,
             "user_id": user_id,
             "startDate": startDate,
-            "EndDate": endDate,
+            "endDate": endDate,
             "cant_persons": cant_persons,
             "status": status
         }
         doc_ref = db.collection('toursReservas').document()
         doc_ref.set(reserve)
+        reserve["id"] = doc_ref.id  # Añadir el ID del documento a la respuesta
         return reserve
     except Exception as e:
         return {"error": str(e)}
@@ -284,7 +282,6 @@ async def get_reserves_by_user(user_id: str):
         return reserve_list
     except Exception as e:
         return {"error": str(e)}
-#--- get reserves by tour ---
 @app.get("/getReservesByTour/{tour_id}")
 async def get_reserves_by_tour(tour_id: str):
     try:
